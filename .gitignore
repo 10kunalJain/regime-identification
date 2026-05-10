@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.ruff_cache/
+.pyright_cache/
+*.egg-info/
+build/
+dist/
+
+# uv / venv
+.venv/
+
+# Env (committed: .env.example only)
+.env
+.env.local
+.env.*.local
+
+# Data store (use data.lock to verify)
+/data/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Markdown — user preference: don't push planning / status / readme docs
+*.md

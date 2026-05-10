@@ -1,0 +1,211 @@
+% Filtered-Only Evaluation of Market Regime Detection
+% A Standardized Protocol and Cross-Method Benchmark Across Eight Historical Crises
+%
+% Categories: q-fin.CP primary, stat.ML secondary
+% Target: arXiv preprint, ~15-20 pages single-column.
+
+\documentclass[11pt]{article}
+
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage{enumitem}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=black,
+  urlcolor=blue!50!black,
+}
+
+\title{%
+  Filtered-Only Evaluation of Market Regime Detection: \\
+  A Standardized Protocol and Cross-Method Benchmark \\
+  Across Eight Historical Crises
+}
+\author{Kunal Jain \\ \texttt{kunal@spectatr.ai}}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+The literature on market-regime detection routinely reports detection-lag and
+posterior-quality numbers using \emph{smoothed} posterior labels, which use
+information from the entire observed sequence. This is appropriate for
+descriptive analysis but inflates apparent performance for any real-time use
+case. We propose a standardized \emph{filtered-only} evaluation protocol with
+three components: (1) a static, cited registry of canonical historical crisis
+events with multi-anchor dates (peak / $-5\%$ drawdown / $-10\%$ drawdown);
+(2) a sustained-fire firing rule (3 consecutive days of $P(\text{crisis}) >
+0.5$) to suppress flicker-credit; and (3) a calibration target rooted in
+observable forward outcomes (21-day forward drawdown $> 10\%$) rather than
+another model's regime estimate. We apply the protocol across six methods ---
+Gaussian HMM, Markov-switching with Student-$t$ emissions, sparse jump model,
+joint cross-sectional HMM with Fama-French factor regime-switching means,
+Bayesian online change-point detection, and Wasserstein $k$-means --- on a
+universe of US equity ETFs over [DATA RANGE]. We measure the gap between
+filtered and smoothed detection lag at the level of individual historical
+crises, and find [SUMMARY OF RESULTS — TO BE FILLED IN AT WEEK 12]. The
+implementation is open-source and bit-deterministic under fixed seeds.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+% Hook: motivate filtered-vs-smoothed gap as the under-reported issue.
+\textbf{TODO}: open with a single-paragraph framing of the smoothed-label problem.
+
+% Contribution list.
+Our contributions are:
+\begin{itemize}[leftmargin=*]
+  \item A standardized filtered-only evaluation protocol with multi-anchor
+    crisis dates, sustained-fire firing rule, and observable-outcome
+    calibration target.
+  \item A cross-method benchmark applying the protocol to six regime-detection
+    methods on US equity ETFs.
+  \item An empirical measurement of the smoothed-vs-filtered detection-lag gap
+    at the level of individual historical crises.
+  \item An open-source bit-deterministic implementation
+    (\url{https://github.com/<placeholder>}) covering the data layer, model
+    family, ensemble, calibration, and backtest pipeline.
+\end{itemize}
+
+\section{Related Work}
+\label{sec:related}
+
+\textbf{TODO}: cite Hamilton (1989), Ang \& Bekaert (2002), Adams \& MacKay
+(2007), Horvath et al.\ (2021), Liu, Maheu \& Song (2024), Shu (2024),
+Frazzini, Israel \& Moskowitz (2018), Idzorek (2007), State Street (2025).
+
+\section{Evaluation Protocol}
+\label{sec:protocol}
+
+\subsection{Crisis-Event Registry}
+The benchmark uses eight historical events, anchored by static dates committed
+in the implementation's \texttt{regime/eval/crises.py}: 2007 Quant Quake,
+2008 Lehman / GFC, 2011 US Debt Ceiling, 2015 China Devaluation, 2018
+Volmageddon, 2020 COVID, 2022 LDI / UK Gilt, 2024 Yen Carry Unwind. Anchor
+dates are not derived from the underlying price data so the registry is
+stable across data revisions.
+
+\subsection{Detection-Lag Definition}
+For a crisis with anchor $t^\star$, the detection lag of method $m$ is
+\[
+  L_m(t^\star) = \min \{t \geq t^\star : P_m(\text{crisis}\mid y_{1:t}) > \theta
+                       \text{ for } \delta \text{ consecutive trading days}\} - t^\star,
+\]
+with default headline parameters $\theta = 0.5$ and $\delta = 3$
+(Section~\ref{sec:protocol-anchors}). The headline anchor is the first close
+at $-5\%$ from the rolling 90-day maximum (\texttt{m5\_date}); we report
+multi-anchor sensitivity (peak / m5 / m10) and multi-threshold sensitivity
+(0.3, 0.5, 0.7) in Appendix~\ref{appendix:sensitivity}.
+
+\subsection{Calibration Target}
+\label{sec:protocol-calibration}
+The crisis head is calibrated against the observable indicator
+\[
+  y_t = \mathbb{1}\!\left[\max\{(P_t - P_{t+s}) / P_t : s = 1, \dots, 21\} > 0.10\right],
+\]
+where $P_t$ is SPY's adjusted close. Calibration uses isotonic regression on
+$k$-fold out-of-fold logistic-regression outputs to avoid the in-sample
+tautology; the trailing 21 days of each fold are masked because their
+forward outcome is unobservable.
+
+\subsection{Multi-Anchor Sensitivity}
+\label{sec:protocol-anchors}
+% TODO: table comparing detection lag under peak / m5 / m10 anchors with
+% threshold = 0.5 and sustained-fire = 3.
+
+\section{Methods Benchmarked}
+\label{sec:methods}
+
+We evaluate six methods. Four are state-based (output $P(s_t \mid y_{1:t})$);
+two are change-point detectors (output native run-length / cluster-distance
+features that are stacked into the calibrated crisis head, not stuffed into
+a fake $K{=}3$ wrapper).
+
+\paragraph{Gaussian HMM.} \textbf{TODO}: spec from \texttt{regime/models/hmm\_gaussian.py}.
+\paragraph{Markov-switching Student-$t$ (MS-AR).} \textbf{TODO}: data-augmented EM.
+\paragraph{Sparse Jump Model.} \textbf{TODO}: $k$-means with jump penalty + Viterbi DP.
+\paragraph{Joint cross-sectional HMM.} \textbf{TODO}: factor-switching means $\alpha_k + B_k^{obs} f_t^{FF}$
++ rank-3 latent factor cov.
+\paragraph{BOCPD.} \textbf{TODO}: Adams-MacKay 2007 with conjugate Normal-IG / Student-$t$ predictive.
+\paragraph{Wasserstein $k$-means.} \textbf{TODO}: medoid clustering on rolling distributional windows.
+
+\section{Data}
+\label{sec:data}
+
+\textbf{TODO}: universe of 18 US ETFs (SPY + 11 sector SPDRs + 6 style-factor
+ETFs) + TLT, daily OHLCV from yfinance, Fama-French 5+Mom from Ken French
+data library, FRED macro series. Description of point-in-time data layer
+(action-log architecture, no retroactive mutation, snapshot-stable hashes
+in \texttt{data.lock}).
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Detection-Lag Comparison}
+\textbf{TODO}: Figure~\ref{fig:detection-lag} — per-crisis detection lag for
+filtered vs smoothed across all six methods.
+
+\subsection{Calibration}
+\textbf{TODO}: Figure~\ref{fig:reliability} — reliability diagram for the
+calibrated crisis head; PR-AUC with random baseline.
+
+\subsection{Smoothed-vs-Filtered Gap}
+\textbf{TODO}: Figure~\ref{fig:smoothed-vs-filtered} — the headline figure
+showing the gap between $P(s_t \mid y_{1:t})$ and $P(s_t \mid y_{1:T})$
+during a representative crisis.
+
+\section{Failure Modes}
+\label{sec:failure}
+
+% Per project convention this section is longer than Section~\ref{sec:results}.
+\textbf{TODO}: enumerate where the protocol disagrees with the published
+literature; where individual methods break down; the period-2017 low-vol
+grind regime where every method underperforms; the cost-sensitivity column
+results.
+
+\section{Reproducibility}
+\label{sec:repro}
+
+The implementation is bit-deterministic under fixed seeds and single-threaded
+BLAS in CI. Every figure in this paper is regenerated by a script in
+\texttt{paper/figures/}. To reproduce the entire paper from raw data:
+\begin{verbatim}
+git clone <repo>
+uv sync --all-extras
+just refresh        # fetch ETF + FRED + Fama-French data
+just lock           # snapshot data hashes
+make -C paper figures
+make -C paper main.pdf
+\end{verbatim}
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+\textbf{TODO}: one paragraph summarizing the protocol contribution and the
+empirical finding about the filtered-vs-smoothed gap.
+
+\bibliographystyle{plainnat}
+\bibliography{refs}
+
+\appendix
+
+\section{Anchor / Threshold Sensitivity}
+\label{appendix:sensitivity}
+\textbf{TODO}: $3\times 3$ table of detection lag across (peak, m5, m10) anchors
+and (0.3, 0.5, 0.7) thresholds.
+
+\section{Pre-Registered Hyperparameters}
+\label{appendix:hyperparameters}
+The full set of hyperparameter values is committed in
+\texttt{STRATEGY\_HYPERPARAMETERS.md} in the source tree; the pre-registration
+commit is dated 2026-05-09 and precedes any backtest commit.
+
+\end{document}
