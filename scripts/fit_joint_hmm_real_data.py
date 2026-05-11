@@ -10,36 +10,17 @@ from __future__ import annotations
 from datetime import date
 
 import numpy as np
-import polars as pl
 from dotenv import load_dotenv
 
 load_dotenv()
 
-from regime.data.query import as_of, as_of_fama_french  # noqa: E402
-from regime.features.registry import log_total_return  # noqa: E402
+from regime.data.joint_dataset import (  # noqa: E402  # re-exported for legacy imports
+    FF_COLUMNS,
+    OBSERVATION_TICKERS,
+    RENAMED_FF,
+    build_wide_dataframe,
+)
 from regime.models.joint_hmm import JointHmm  # noqa: E402
-
-OBSERVATION_TICKERS = ("SPY", "XLK", "XLF", "XLE", "XLV", "TLT")
-FF_COLUMNS = ("Mkt-RF", "SMB", "HML", "RMW", "CMA", "Mom")
-RENAMED_FF = {f: f"ff_{f.lower().replace('-', '_')}" for f in FF_COLUMNS}
-
-
-def build_wide_dataframe(t: date) -> pl.DataFrame:
-    """Return DataFrame with columns: data_time, ret_<ticker>..., ff_<factor>..."""
-    ticker_frames: list[pl.DataFrame] = []
-    for ticker in OBSERVATION_TICKERS:
-        ohlcv = as_of(ticker, t)
-        rets = log_total_return(ohlcv).alias(f"ret_{ticker}")
-        ticker_frames.append(ohlcv.select("data_time").with_columns(rets))
-
-    combined = ticker_frames[0]
-    for df in ticker_frames[1:]:
-        combined = combined.join(df, on="data_time", how="inner")
-
-    ff = as_of_fama_french(t).select("data_time", *FF_COLUMNS)
-    combined = combined.join(ff, on="data_time", how="inner")
-    combined = combined.rename(RENAMED_FF)
-    return combined.drop_nulls().sort("data_time")
 
 
 def main() -> int:

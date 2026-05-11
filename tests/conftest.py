@@ -15,6 +15,26 @@ import polars as pl
 import pytest
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    """Register --regenerate-snapshots for the snapshot-test regeneration workflow.
+
+    Per CLAUDE.md §Snapshot tests: snapshot files are committed and asserted
+    against on every push. Regenerating requires this explicit opt-in flag
+    plus a commit-message note explaining why the numbers moved.
+    """
+    parser.addoption(
+        "--regenerate-snapshots",
+        action="store_true",
+        default=False,
+        help="Regenerate committed snapshot files instead of asserting against them.",
+    )
+
+
+@pytest.fixture
+def regenerate_snapshots(request: pytest.FixtureRequest) -> bool:
+    return bool(request.config.getoption("--regenerate-snapshots"))
+
+
 @pytest.fixture
 def tmp_data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setenv("REGIME_DATA_ROOT", str(tmp_path))

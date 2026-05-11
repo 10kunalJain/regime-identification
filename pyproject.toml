@@ -73,7 +73,7 @@ ignore = ["RUF001", "RUF002", "RUF003", "SIM300"]
 # conventions as the model code.
 "paper/figures/**" = ["N803", "N806"]
 "scripts/**" = ["N803", "N806"]
-"regime/eval/walkforward.py" = ["N806"]
+"regime/eval/**" = ["N803", "N806"]
 
 [tool.pyright]
 include = ["regime", "tests"]

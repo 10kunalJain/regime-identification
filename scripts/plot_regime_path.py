@@ -12,7 +12,6 @@ plot can be re-run quickly without re-fitting (delete the cache to refit).
 from __future__ import annotations
 
 import json
-import sys
 from datetime import date
 from pathlib import Path
 
@@ -29,15 +28,12 @@ import matplotlib.dates as mdates  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.colors import to_rgba  # noqa: E402
 
-# Allow running as plain script or via `python -m scripts.plot_regime_path`.
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fit_joint_hmm_real_data import (  # noqa: E402
+from regime.data.joint_dataset import (  # noqa: E402
     FF_COLUMNS,
     OBSERVATION_TICKERS,
     RENAMED_FF,
     build_wide_dataframe,
 )
-
 from regime.data.query import as_of  # noqa: E402
 from regime.eval.crises import CRISES  # noqa: E402
 from regime.models.joint_hmm import JointHmm  # noqa: E402

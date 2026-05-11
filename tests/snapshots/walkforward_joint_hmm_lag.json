@@ -1,0 +1,64 @@
+{
+  "window_start": "2003-01-01",
+  "window_end": "2010-12-31",
+  "n_folds": 3,
+  "n_test_rows": 754,
+  "crisis_lag": [
+    {
+      "crisis_name": "Aug 2007 Quant Quake",
+      "in_eval_window": true,
+      "first_fire_date": "2008-12-18",
+      "lag_m5": 344,
+      "lag_m10": 339
+    },
+    {
+      "crisis_name": "Sep 2008 Lehman / GFC",
+      "in_eval_window": true,
+      "first_fire_date": "2008-12-18",
+      "lag_m5": 281,
+      "lag_m10": 235
+    },
+    {
+      "crisis_name": "Aug 2011 US Debt Ceiling",
+      "in_eval_window": false,
+      "first_fire_date": null,
+      "lag_m5": null,
+      "lag_m10": null
+    },
+    {
+      "crisis_name": "Aug 2015 China Devaluation",
+      "in_eval_window": false,
+      "first_fire_date": null,
+      "lag_m5": null,
+      "lag_m10": null
+    },
+    {
+      "crisis_name": "Feb 2018 Volmageddon",
+      "in_eval_window": false,
+      "first_fire_date": null,
+      "lag_m5": null,
+      "lag_m10": null
+    },
+    {
+      "crisis_name": "Mar 2020 COVID",
+      "in_eval_window": false,
+      "first_fire_date": null,
+      "lag_m5": null,
+      "lag_m10": null
+    },
+    {
+      "crisis_name": "Sep 2022 LDI / UK Gilt",
+      "in_eval_window": false,
+      "first_fire_date": null,
+      "lag_m5": null,
+      "lag_m10": null
+    },
+    {
+      "crisis_name": "Aug 2024 Yen Carry Unwind",
+      "in_eval_window": false,
+      "first_fire_date": null,
+      "lag_m5": null,
+      "lag_m10": null
+    }
+  ]
+}
