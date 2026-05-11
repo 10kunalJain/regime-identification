@@ -55,9 +55,7 @@ def test_detection_lag_snapshot_real_data(regenerate_snapshots: bool) -> None:
         pytest.skip("PIT data store unavailable; run `uv run regime data refresh` first")
 
     df = build_wide_dataframe(WINDOW_END)
-    df = df.filter(
-        (df["data_time"] >= WINDOW_START) & (df["data_time"] <= WINDOW_END)
-    )
+    df = df.filter((df["data_time"] >= WINDOW_START) & (df["data_time"] <= WINDOW_END))
     assert df.height > 1500, f"expected >1500 trading days in 2003-2010, got {df.height}"
 
     obs_cols = tuple(c for c in df.columns if c.startswith("ret_"))
@@ -102,8 +100,7 @@ def test_detection_lag_snapshot_real_data(regenerate_snapshots: bool) -> None:
         pytest.skip(f"regenerated snapshot at {SNAPSHOT_PATH}")
 
     assert SNAPSHOT_PATH.exists(), (
-        f"snapshot file missing at {SNAPSHOT_PATH}. "
-        "Run with --regenerate-snapshots to create it."
+        f"snapshot file missing at {SNAPSHOT_PATH}. Run with --regenerate-snapshots to create it."
     )
     expected = json.loads(SNAPSHOT_PATH.read_text())
     assert observed == expected, (

@@ -124,9 +124,7 @@ def run_joint_hmm_walkforward(
     """
     cfg = config or WalkForwardConfig()
     if SPY_RETURN_COLUMN not in features.columns:
-        raise ValueError(
-            f"features must include {SPY_RETURN_COLUMN!r} for forward-drawdown labels"
-        )
+        raise ValueError(f"features must include {SPY_RETURN_COLUMN!r} for forward-drawdown labels")
 
     n = features.height
     if n <= cfg.initial_train_rows:
