@@ -562,9 +562,7 @@ def run_cross_method_walkforward(
                 _fmt_metric(fold_metrics["brier"]),
                 _fmt_metric(fold_metrics["pr_auc"]),
             )
-        _LOG.info(
-            "[%s] complete in %.1fs", method.name, time.perf_counter() - method_start
-        )
+        _LOG.info("[%s] complete in %.1fs", method.name, time.perf_counter() - method_start)
 
     posterior_df = _posterior_rows_to_frame(posterior_rows)
 
@@ -796,16 +794,12 @@ def _score_changepoint_fold(
     """
     out = np.zeros(native_test.shape[0], dtype=np.float64)
     if native_train_obs.shape[0] == 0:
-        return _min_max_scale_with_ref(
-            native_test[:, 0], reference=native_train_all[:, 0]
-        )
+        return _min_max_scale_with_ref(native_test[:, 0], reference=native_train_all[:, 0])
 
     y_train = labels_train_obs.astype(np.int64)
     if not (0 < y_train.sum() < y_train.size):
         _ = method_name  # silence unused-variable lint; kept for future logs
-        scaled = _min_max_scale_with_ref(
-            native_test[:, 0], reference=native_train_all[:, 0]
-        )
+        scaled = _min_max_scale_with_ref(native_test[:, 0], reference=native_train_all[:, 0])
         out[test_finite] = scaled[test_finite]
         return out
 

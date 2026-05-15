@@ -36,10 +36,7 @@ STRESS_SHARPE_FLOOR_FRACTION = 0.60
 @pytest.mark.slow
 def test_stress_sharpe_at_least_60pct_of_central_sharpe() -> None:
     if not CENTRAL_PARQUET.exists() or not STRESS_PARQUET.exists():
-        pytest.skip(
-            "regime-BL backtest parquets missing; run "
-            "scripts/backtest_regime_bl.py first"
-        )
+        pytest.skip("regime-BL backtest parquets missing; run scripts/backtest_regime_bl.py first")
 
     central_nav = pl.read_parquet(CENTRAL_PARQUET)["nav"].to_numpy().astype(np.float64)
     stress_nav = pl.read_parquet(STRESS_PARQUET)["nav"].to_numpy().astype(np.float64)

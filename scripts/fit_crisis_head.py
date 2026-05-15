@@ -128,9 +128,7 @@ def _walk_forward_oof(
     from sklearn.isotonic import IsotonicRegression
 
     fold_to_dates: dict[int, set] = {
-        int(fid): set(
-            posterior.filter(pl.col("fold_id") == fid)["data_time"].unique().to_list()
-        )
+        int(fid): set(posterior.filter(pl.col("fold_id") == fid)["data_time"].unique().to_list())
         for fid in posterior["fold_id"].unique().to_list()
     }
     n_rows = matrix.X.shape[0]
@@ -138,9 +136,7 @@ def _walk_forward_oof(
 
     n_used = 0
     for fid in sorted(fold_to_dates):
-        held_mask = np.array(
-            [d in fold_to_dates[fid] for d in matrix.data_times], dtype=bool
-        )
+        held_mask = np.array([d in fold_to_dates[fid] for d in matrix.data_times], dtype=bool)
         held_dates = [d for d, k in zip(matrix.data_times, held_mask, strict=True) if k]
         if not held_dates:
             continue
@@ -236,9 +232,7 @@ def _print_comparison(
     )
 
 
-def _check_pr_auc_acceptance(
-    per_method: dict[str, dict[str, float]], ens_pr_auc: float
-) -> None:
+def _check_pr_auc_acceptance(per_method: dict[str, dict[str, float]], ens_pr_auc: float) -> None:
     best_pr = max(m["pr_auc"] for m in per_method.values())
     if ens_pr_auc > best_pr:
         print("ACCEPTANCE: ensemble PR-AUC strictly improves over best single ✓")

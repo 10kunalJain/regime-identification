@@ -94,9 +94,7 @@ def assemble_feature_matrix(
         per_method[name] = sub
         widths = sub["raw_features"].list.len().unique().to_list()
         if len(widths) != 1:
-            raise ValueError(
-                f"method {name!r} has inconsistent raw_features widths: {widths}"
-            )
+            raise ValueError(f"method {name!r} has inconsistent raw_features widths: {widths}")
         feature_widths[name] = int(widths[0])
 
     base_dates = per_method[methods_sorted[0]]["data_time"].to_list()
@@ -104,14 +102,10 @@ def assemble_feature_matrix(
     for name in methods_sorted[1:]:
         other_dates = per_method[name]["data_time"].to_list()
         if other_dates != base_dates:
-            raise ValueError(
-                f"method {name!r} data_time series differs from {methods_sorted[0]!r}"
-            )
+            raise ValueError(f"method {name!r} data_time series differs from {methods_sorted[0]!r}")
         other_labels = per_method[name]["label"].to_numpy()
         if not np.array_equal(other_labels, base_labels):
-            raise ValueError(
-                f"method {name!r} labels disagree with {methods_sorted[0]!r}"
-            )
+            raise ValueError(f"method {name!r} labels disagree with {methods_sorted[0]!r}")
 
     n = len(base_dates)
     cols: list[np.ndarray] = []
@@ -120,9 +114,7 @@ def assemble_feature_matrix(
 
     name_to_meta = {m.name: m for m in REGISTRY}
     for name in methods_sorted:
-        score = (
-            per_method[name]["crisis_score"].to_numpy().astype(np.float64).reshape(-1, 1)
-        )
+        score = per_method[name]["crisis_score"].to_numpy().astype(np.float64).reshape(-1, 1)
         cols.append(score)
         feature_names.append(f"{name}__crisis_score")
         if include_raw:

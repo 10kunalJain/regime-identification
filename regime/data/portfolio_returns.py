@@ -22,9 +22,7 @@ from regime.data.universe import DEFENSIVE, EQUITIES
 PORTFOLIO_TICKERS: tuple[str, ...] = (*EQUITIES, *DEFENSIVE)
 
 
-def build_portfolio_returns(
-    t: date, tickers: tuple[str, ...] = PORTFOLIO_TICKERS
-) -> pl.DataFrame:
+def build_portfolio_returns(t: date, tickers: tuple[str, ...] = PORTFOLIO_TICKERS) -> pl.DataFrame:
     """Wide arithmetic-return + notional-volume dataframe for `tickers`.
 
     Columns: `data_time`, then for each ticker:

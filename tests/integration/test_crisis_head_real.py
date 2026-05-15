@@ -48,9 +48,7 @@ def test_ensemble_pr_auc_strictly_improves_over_best_single() -> None:
     posterior = pl.read_parquet(METHODS_PARQUET)
     matrix = assemble_feature_matrix(posterior)
     fold_to_dates = {
-        int(fid): set(
-            posterior.filter(pl.col("fold_id") == fid)["data_time"].unique().to_list()
-        )
+        int(fid): set(posterior.filter(pl.col("fold_id") == fid)["data_time"].unique().to_list())
         for fid in posterior["fold_id"].unique().to_list()
     }
 
@@ -69,13 +67,9 @@ def test_ensemble_pr_auc_strictly_improves_over_best_single() -> None:
     ens_brier = brier_score(p_calibrated[obs], y_obs.astype(np.float64))
 
     method_metrics = _per_method_pooled_metrics(posterior, matrix.data_times, obs, y_obs)
-    best_pr_name, best_pr = max(
-        method_metrics.items(), key=lambda kv: kv[1]["pr_auc"]
-    )
+    best_pr_name, best_pr = max(method_metrics.items(), key=lambda kv: kv[1]["pr_auc"])
     best_pr_value = best_pr["pr_auc"]
-    best_brier_name, best_brier = min(
-        method_metrics.items(), key=lambda kv: kv[1]["brier"]
-    )
+    best_brier_name, best_brier = min(method_metrics.items(), key=lambda kv: kv[1]["brier"])
 
     assert ens_pr_auc > best_pr_value, (
         f"ensemble walk-forward PR-AUC {ens_pr_auc:.4f} does not strictly "
@@ -86,17 +80,13 @@ def test_ensemble_pr_auc_strictly_improves_over_best_single() -> None:
     )
 
 
-def _walk_forward_raw_predictions(
-    matrix, fold_to_dates: dict[int, set]
-) -> np.ndarray:
+def _walk_forward_raw_predictions(matrix, fold_to_dates: dict[int, set]) -> np.ndarray:
     """For each fold, fit CrisisHead on rows strictly before the fold and emit
     the LR raw (uncalibrated) probability on the fold's rows. Returns NaN
     where the fold's training set is too small or has insufficient positives."""
     p_raw = np.full(matrix.X.shape[0], np.nan, dtype=np.float64)
     for fid in sorted(fold_to_dates):
-        held_mask = np.array(
-            [d in fold_to_dates[fid] for d in matrix.data_times], dtype=bool
-        )
+        held_mask = np.array([d in fold_to_dates[fid] for d in matrix.data_times], dtype=bool)
         held_dates = [d for d, k in zip(matrix.data_times, held_mask, strict=True) if k]
         if not held_dates:
             continue
