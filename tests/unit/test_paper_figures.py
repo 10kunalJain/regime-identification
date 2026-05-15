@@ -1,7 +1,11 @@
 """Smoke tests for the paper-figure scripts.
 
-Each script must run end-to-end and produce a PNG file at the requested path.
-Tests run the scripts as subprocesses to mirror what the Makefile does.
+Each script must run end-to-end and produce a valid PNG at the requested
+path. Tests run the scripts as subprocesses to mirror what the Makefile
+does, and pass `--input <fixture>` so the smoke test never depends on the
+locally-built `build/paper/...` artefacts (which are gitignored). The
+fixtures live under `tests/fixtures/paper/` and are regenerable via
+`uv run python scripts/build_paper_inputs.py`.
 """
 
 from __future__ import annotations
@@ -14,11 +18,27 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 FIGURES = ROOT / "paper" / "figures"
+FIXTURES = ROOT / "tests" / "fixtures" / "paper"
 
 
-def _run_script(script_path: Path, output_path: Path) -> None:
+FIGURE_SPECS: tuple[tuple[str, str], ...] = (
+    ("figure_smoothed_vs_filtered.py", "posterior_covid.parquet"),
+    ("figure_reliability.py", "crisis_head.parquet"),
+    ("figure_detection_lag.py", "methods_crisis_lag.parquet"),
+    ("figure_regime_path.py", "regime_path.parquet"),
+)
+
+
+def _run_script(script_path: Path, input_path: Path, output_path: Path) -> None:
     result = subprocess.run(
-        [sys.executable, str(script_path), "--output", str(output_path)],
+        [
+            sys.executable,
+            str(script_path),
+            "--input",
+            str(input_path),
+            "--output",
+            str(output_path),
+        ],
         capture_output=True,
         text=True,
         timeout=60,
@@ -30,18 +50,18 @@ def _run_script(script_path: Path, output_path: Path) -> None:
         )
 
 
-@pytest.mark.parametrize(
-    "script_name",
-    ["figure_smoothed_vs_filtered.py", "figure_reliability.py"],
-)
-def test_figure_script_produces_png(tmp_path: Path, script_name: str):
+@pytest.mark.parametrize(("script_name", "fixture_name"), FIGURE_SPECS)
+def test_figure_script_produces_png(tmp_path: Path, script_name: str, fixture_name: str):
     script = FIGURES / script_name
+    fixture = FIXTURES / fixture_name
     assert script.exists(), f"{script_name} missing"
+    assert fixture.exists(), (
+        f"{fixture_name} missing — regenerate via scripts/build_paper_inputs.py"
+    )
+
     output = tmp_path / f"{script.stem}.png"
-    _run_script(script, output)
+    _run_script(script, fixture, output)
     assert output.exists()
-    # PNG signature: 8 bytes 89 50 4E 47 0D 0A 1A 0A
     sig = output.read_bytes()[:8]
     assert sig == b"\x89PNG\r\n\x1a\n", "output is not a valid PNG"
-    # Some non-trivial size (>2 KB) — empty plots are smaller.
     assert output.stat().st_size > 2048
