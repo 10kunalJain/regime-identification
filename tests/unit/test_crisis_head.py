@@ -237,9 +237,7 @@ def test_assemble_feature_matrix_inconsistent_widths_raises():
     df = _toy_posterior()
     # Replace the first bocpd row's raw_features with a longer list — polars
     # lists are variable-length, so the width check should trigger.
-    base_dates = (
-        df.filter(pl.col("method") == "bocpd").sort("data_time")["data_time"].to_list()
-    )
+    base_dates = df.filter(pl.col("method") == "bocpd").sort("data_time")["data_time"].to_list()
     target = base_dates[0]
     ragged = df.with_columns(
         pl.when((pl.col("method") == "bocpd") & (pl.col("data_time") == target))
