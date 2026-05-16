@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --ink: #1a1614;
+  --paper: #faf7f2;
+  --paper-2: #f0ece4;
+  --rule: #d4cfc4;
+  --rule-2: #ebe6dc;
+  --muted: #6e6863;
+  --state-normal: #5b6470;
+  --state-calm: #6b7d5e;
+  --state-crisis: #962d22;
+}
+
+html,
+body {
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+body {
+  font-feature-settings: "kern" 1, "ss01" 1, "liga" 1;
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+
+  .smallcaps {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+
+  .hairline {
+    border-color: var(--rule);
+  }
+}
+
+/* Recharts overrides — strip default chrome to match the Fed-working-paper aesthetic. */
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+.recharts-cartesian-axis-tick text {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 10px;
+  fill: var(--muted);
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: var(--rule-2);
+}
+
+.recharts-reference-line line {
+  stroke: var(--rule);
+}
+
+.recharts-tooltip-cursor {
+  stroke: var(--rule);
+  stroke-dasharray: 2 3;
+}
+
+::selection {
+  background-color: var(--state-crisis);
+  color: var(--paper);
+}

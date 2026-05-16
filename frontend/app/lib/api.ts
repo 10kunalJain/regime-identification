@@ -1,54 +1,40 @@
 /**
- * Typed client for the FastAPI backend.
+ * Server-side data resolution for the live panel.
  *
- * Uses a 5s timeout and falls back to the Vercel KV cached blob when the
- * upstream API is unreachable. Per ARCHITECTURE.md §10, this is the
- * resilience mechanism that keeps the dashboard up during Oracle outages.
+ * Strategy: try the FastAPI backend with a short timeout; on any failure
+ * fall through to the static JSON baked into `frontend/public/` by
+ * `scripts/build_paper_inputs.py`. The Vercel KV blob fallback layer wires
+ * in once the KV add-on is provisioned (placeholder retained for shape).
+ *
+ * Per ARCHITECTURE.md §10 the dashboard must never 502 — there is always
+ * a renderable payload, even if it is the last build's snapshot.
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-const KV_FALLBACK_KEY = "regime:latest";
+import type { Freshness, RegimePosterior } from "./types";
 
-export interface RegimePosterior {
-  as_of: string;
-  regime_probs_uncal: Record<string, number>;
-  crisis_prob_21d_cal: number;
-  confidence: number;
-  method: string;
-  version: string;
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const TIMEOUT_MS = 3000;
+
+export interface ResolvedLatest {
+  posterior: RegimePosterior;
+  freshness: Freshness;
 }
 
-export async function fetchLatestRegime(): Promise<RegimePosterior | null> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
+export async function resolveLatest(staticFallback: RegimePosterior): Promise<ResolvedLatest> {
+  if (!API_URL) {
+    return { posterior: staticFallback, freshness: "static" };
+  }
   try {
     const r = await fetch(`${API_URL}/regime/now`, {
-      signal: controller.signal,
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
     });
     if (r.ok) {
       const body = (await r.json()) as RegimePosterior;
-      // Best-effort cache to KV; ignore errors so a KV outage doesn't break the read path.
-      void cacheToKv(body);
-      return body;
+      return { posterior: body, freshness: "live" };
     }
   } catch {
-    // fall through to KV
-  } finally {
-    clearTimeout(timeout);
+    // Network error or timeout — fall through to the cached blob.
   }
-  return await readFromKv();
-}
-
-async function cacheToKv(value: RegimePosterior): Promise<void> {
-  // Placeholder. Vercel KV client is wired in at `lib/kv.ts` once the
-  // KV add-on is provisioned for the project (Vercel free tier allows 1 KV).
-  void value;
-}
-
-async function readFromKv(): Promise<RegimePosterior | null> {
-  // Placeholder. Returns null when KV is not yet provisioned; the page renders
-  // the "no posterior" state in that case.
-  void KV_FALLBACK_KEY;
-  return null;
+  return { posterior: staticFallback, freshness: "cached" };
 }

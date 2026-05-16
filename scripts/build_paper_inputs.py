@@ -38,12 +38,15 @@ CACHE_PATH = Path("build/joint_hmm_real.json")
 POSTERIOR_COVID_PATH = Path("build/paper/posterior_covid.parquet")
 REGIME_PATH_PATH = Path("build/paper/regime_path.parquet")
 FIXTURE_DIR = Path("tests/fixtures/paper")
+FRONTEND_PUBLIC_DIR = Path("frontend/public")
 
 COVID_START = date(2020, 1, 2)
 COVID_END = date(2020, 6, 30)
 # Subsample stride for the regime-path fixture — keeps the committed parquet
 # under ~30 KB while preserving the visual shape of the price + state path.
 REGIME_PATH_FIXTURE_STRIDE = 6
+# Number of trailing trading days exposed to the frontend (sparkline window).
+FRONTEND_PATH_WINDOW = 365
 
 
 def _fit_or_load(
@@ -156,7 +159,62 @@ def main() -> int:
 
     for p in sorted(FIXTURE_DIR.glob("*.parquet")):
         print(f"  fixture: {p}  ({p.stat().st_size} bytes)")
+
+    _emit_frontend_snapshots(full)
     return 0
+
+
+def _emit_frontend_snapshots(full: pl.DataFrame) -> None:
+    """Write `frontend/public/regime_{path,latest}.json` — the static fallback
+    the Vercel-hosted dashboard renders when the backend API is unreachable.
+
+    The path slice is trailing-`FRONTEND_PATH_WINDOW` trading days; the latest
+    snapshot is a single-row payload shaped like the FastAPI `/regime/now`
+    response so the React component code-paths are identical.
+    """
+    import json
+
+    FRONTEND_PUBLIC_DIR.mkdir(parents=True, exist_ok=True)
+    tail = full.tail(FRONTEND_PATH_WINDOW)
+    path_payload = [
+        {
+            "data_time": d.isoformat(),
+            "state": int(s),
+            "crisis_prob": float(p),
+            "spy_close": float(c),
+        }
+        for d, s, p, c in zip(
+            tail["data_time"].to_list(),
+            tail["state"].to_list(),
+            tail["crisis_prob"].to_list(),
+            tail["spy_close"].to_list(),
+            strict=True,
+        )
+    ]
+    path_out = FRONTEND_PUBLIC_DIR / "regime_path.json"
+    path_out.write_text(json.dumps(path_payload, separators=(",", ":")))
+
+    # Latest row, reshaped to match the API's `RegimePosterior` schema. The
+    # uncalibrated posterior is approximated by a one-hot on the argmax state
+    # (this is the static-fallback payload; the live API exposes the full
+    # three-state posterior when reachable).
+    state_names = ["normal", "calm_bull", "crisis"]
+    last = tail.tail(1).row(0, named=True)
+    one_hot = {n: 0.0 for n in state_names}
+    one_hot[state_names[int(last["state"])]] = 1.0
+    latest_payload = {
+        "as_of": last["data_time"].isoformat(),
+        "regime_probs_uncal": one_hot,
+        "crisis_prob_21d_cal": float(last["crisis_prob"]),
+        "confidence": 1.0 - float(2 * last["crisis_prob"] * (1 - last["crisis_prob"])),
+        "method": "joint_hmm",
+        "version": "build_paper_inputs",
+    }
+    latest_out = FRONTEND_PUBLIC_DIR / "regime_latest.json"
+    latest_out.write_text(json.dumps(latest_payload, separators=(",", ":")))
+
+    print(f"  frontend: {path_out}  ({path_out.stat().st_size} bytes)")
+    print(f"  frontend: {latest_out}  ({latest_out.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":

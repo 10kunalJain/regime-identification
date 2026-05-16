@@ -1,0 +1,21 @@
+# Node
+node_modules/
+.npm/
+.eslintcache
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env (committed: .env.example only)
+.env
+.env.local
+.env.*.local
+
+# Vercel
+.vercel/
